@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Angela's Brick Breaker (Minimal)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+            padding: 20px;
+        }
+
+        .game-container {
+            max-width: 500px;
+            width: 100%;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: #e86a92;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-gap: 2px;
+            background-color: #f0f0f0;
+            border: 3px solid #ddd;
+            border-radius: 5px;
+            padding: 5px;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .cell {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .brick {
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.2s;
+        }
+
+        .red { background-color: #ff5252; }
+        .blue { background-color: #4285f4; }
+        .green { background-color: #0f9d58; }
+        .yellow { background-color: #ffeb3b; }
+        .purple { background-color: #9c27b0; }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #e86a92;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Angela's Brick Breaker</h1>
+        
+        <div class="game-info">
+            <div>Score: <span id="score">0</span></div>
+            <div>Moves: <span id="moves">0</span></div>
+        </div>
+        
+        <div id="game-board"></div>
+        
+        <div class="controls">
+            <button id="new-game-btn">New Game</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Game configuration
+            const config = {
+                rows: 8,
+                columns: 8,
+                brickTypes: ['red', 'blue', 'green', 'yellow', 'purple']
+            };
+            
+            // Game state
+            let state = {
+                board: [],
+                score: 0,
+                moves: 0
+            };
+            
+            // DOM elements
+            const gameBoard = document.getElementById('game-board');
+            const scoreElement = document.getElementById('score');
+            const movesElement = document.getElementById('moves');
+            const newGameButton = document.getElementById('new-game-btn');
+            
+            // Initialize the game
+            function initGame() {
+                console.log('Initializing game...');
+                
+                // Reset state
+                state.board = [];
+                state.score = 0;
+                state.moves = 0;
+                
+                // Update UI
+                scoreElement.textContent = state.score;
+                movesElement.textContent = state.moves;
+                
+                // Clear the board
+                gameBoard.innerHTML = '';
+                
+                // Set up grid styling
+                gameBoard.style.gridTemplateColumns = `repeat(${config.columns}, 1fr)`;
+                gameBoard.style.gridTemplateRows = `repeat(${config.rows}, 1fr)`;
+                
+                // Create the board data
+                createBoard();
+                
+                // Render the board
+                renderBoard();
+                
+                console.log('Game initialized!');
+            }
+            
+            // Create the board data
+            function createBoard() {
+                for (let row = 0; row < config.rows; row++) {
+                    state.board[row] = [];
+                    for (let col = 0; col < config.columns; col++) {
+                        // Random brick type
+                        const randomIndex = Math.floor(Math.random() * config.brickTypes.length);
+                        state.board[row][col] = {
+                            type: config.brickTypes[randomIndex],
+                            row: row,
+                            col: col
+                        };
+                    }
+                }
+            }
+            
+            // Render the board to the DOM
+            function renderBoard() {
+                gameBoard.innerHTML = '';
+                
+                for (let row = 0; row < config.rows; row++) {
+                    for (let col = 0; col < config.columns; col++) {
+                        const brick = state.board[row][col];
+                        
+                        // Create cell element
+                        const cell = document.createElement('div');
+                        cell.classList.add('cell');
+                        cell.setAttribute('data-row', row);
+                        cell.setAttribute('data-col', col);
+                        
+                        // Create brick element
+                        const brickElement = document.createElement('div');
+                        brickElement.classList.add('brick', brick.type);
+                        
+                        // Add brick to cell
+                        cell.appendChild(brickElement);
+                        
+                        // Add to game board
+                        gameBoard.appendChild(cell);
+                    }
+                }
+            }
+            
+            // Event listeners
+            newGameButton.addEventListener('click', initGame);
+            
+            // Start the game
+            initGame();
+        });
+    </script>
+</body>
+</html> 

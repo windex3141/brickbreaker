@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Angela's Brick Breaker (Fixed)</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* Debug styles */
+        .debug-info {
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            font-family: monospace;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <header>
+            <h1>Angela's Brick Breaker</h1>
+            <div class="game-info">
+                <div class="score">Score: <span id="score">0</span></div>
+                <div class="moves">Moves: <span id="moves">0</span></div>
+                <div class="hints">Hints: <span id="hints-available">3</span></div>
+                <div class="smashes">Smashes: <span id="smashes">1</span></div>
+            </div>
+        </header>
+
+        <div id="game-board"></div>
+
+        <div class="controls">
+            <button id="new-game-btn">New Game</button>
+            <button id="hint-btn" class="hint-button">Hint</button>
+            <button id="smash-btn" class="smash-button">Screen Smash</button>
+        </div>
+
+        <div class="bonus-info">
+            <h3>Special Bricks:</h3>
+            <div class="bonus-types">
+                <div class="bonus-type">
+                    <div class="candy-preview diamond"></div>
+                    <div class="bonus-description">Diamond: 50 points</div>
+                </div>
+                <div class="bonus-type">
+                    <div class="candy-preview gold"></div>
+                    <div class="bonus-description">Gold: 30 points</div>
+                </div>
+            </div>
+            <p class="tip">Regular bricks are worth 10 points each. Match 4 or more for bonus points!</p>
+        </div>
+
+        <!-- Game Over Overlay -->
+        <div id="game-over" class="overlay hidden">
+            <div class="overlay-content">
+                <h2>Game Over</h2>
+                <p>No more moves available!</p>
+                <p class="final-score">Final Score: <span id="final-score">0</span></p>
+                <button id="restart-btn">Play Again</button>
+            </div>
+        </div>
+
+        <!-- Hint Indicator -->
+        <div id="hint-recharge" class="hint-notification hidden">
+            <p>Hint Recharged! <span id="hints-available">3</span> remaining</p>
+        </div>
+
+        <!-- Smash Indicator -->
+        <div id="smash-notification" class="smash-notification hidden">
+            <p>Angela's Screen Smash Ready!</p>
+        </div>
+    </div>
+
+    <div id="debug-info" class="debug-info hidden">
+        <div>Debug Output:</div>
+        <div id="debug-output"></div>
+    </div>
+
+    <script>
+        // Debug function
+        function debug(message) {
+            console.log(message);
+            const debugOutput = document.getElementById('debug-output');
+            if (debugOutput) {
+                const line = document.createElement('div');
+                line.textContent = message;
+                debugOutput.appendChild(line);
+                debugOutput.scrollTop = debugOutput.scrollHeight;
+            }
+            
+            // Show debug panel
+            document.getElementById('debug-info').classList.remove('hidden');
+        }
+
+        // Load the main game script with error handling
+        window.addEventListener('load', function() {
+            debug('Page loaded, attempting to load game script...');
+            
+            const script = document.createElement('script');
+            script.src = 'js/app.js';
+            
+            script.onload = function() {
+                debug('Game script loaded successfully!');
+            };
+            
+            script.onerror = function() {
+                debug('ERROR: Failed to load game script. Check if js/app.js exists and is accessible.');
+                document.getElementById('game-board').innerHTML = '<div style="color:red;padding:20px;">Error loading game. Please check console for details.</div>';
+            };
+            
+            document.body.appendChild(script);
+        });
+
+        // Check that DOM elements exist
+        window.addEventListener('DOMContentLoaded', function() {
+            debug('DOM content loaded, checking critical elements...');
+            
+            const elements = [
+                'game-board', 'score', 'moves', 'hints-available', 'smashes',
+                'new-game-btn', 'hint-btn', 'smash-btn', 'game-over', 'final-score',
+                'hint-recharge', 'smash-notification'
+            ];
+            
+            elements.forEach(function(id) {
+                const element = document.getElementById(id);
+                debug(`Element #${id}: ${element ? 'Found' : 'MISSING'}`);
+            });
+        });
+    </script>
+</body>
+</html> 

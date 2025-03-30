@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Angela's Brick Breaker</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="game-container">
+        <header>
+            <h1>Angela's Brick Breaker</h1>
+            <div class="game-info">
+                <div class="score">Score: <span id="score">0</span></div>
+                <div class="moves">Moves: <span id="moves">0</span></div>
+                <div class="hints">Hints: <span id="hints-available">3</span></div>
+                <div class="smashes">Smashes: <span id="smashes">1</span></div>
+            </div>
+        </header>
+        
+        <div id="game-board"></div>
+        
+        <div class="controls">
+            <button id="new-game-btn">New Game</button>
+            <button id="hint-btn" class="hint-button">Hint</button>
+            <button id="smash-btn" class="smash-button">Screen Smash</button>
+        </div>
+        
+        <div class="bonus-info">
+            <h3>Special Bricks:</h3>
+            <div class="bonus-types">
+                <div class="bonus-type">
+                    <div class="candy-preview diamond"></div>
+                    <div class="bonus-description">Diamond: 50 points</div>
+                </div>
+                <div class="bonus-type">
+                    <div class="candy-preview gold"></div>
+                    <div class="bonus-description">Gold: 30 points</div>
+                </div>
+            </div>
+            <p class="tip">Regular bricks are worth 10 points each. Match 4 or more for bonus points!</p>
+        </div>
+        
+        <!-- Game Over Overlay -->
+        <div id="game-over" class="overlay hidden">
+            <div class="overlay-content">
+                <h2>Game Over</h2>
+                <p>No more moves available!</p>
+                <p class="final-score">Final Score: <span id="final-score">0</span></p>
+                <button id="restart-btn">Play Again</button>
+            </div>
+        </div>
+        
+        <!-- Hint Indicator -->
+        <div id="hint-recharge" class="hint-notification hidden">
+            <p>Hint Recharged! <span id="hints-available">3</span> remaining</p>
+        </div>
+        
+        <!-- Smash Indicator -->
+        <div id="smash-notification" class="smash-notification hidden">
+            <p>Angela's Screen Smash Ready!</p>
+        </div>
+    </div>
+    
+    <script src="js/app.js"></script>
+</body>
+</html> 
