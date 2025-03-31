@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Angela's Brick Breaker (Simple Screen Smash)</title>
+    <title>Brick Breaker Levels</title>
     <style>
         * {
             margin: 0;
@@ -48,7 +48,7 @@
 
         #game-board {
             display: grid;
-            grid-template-columns: repeat(8, 1fr);
+            grid-template-columns: repeat(6, 1fr);
             grid-gap: 2px;
             background-color: #f0f0f0;
             border: 3px solid #ddd;
@@ -74,7 +74,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: transform 0.2s, opacity 0.2s, box-shadow 0.2s;
+            transition: transform 0.2s;
         }
 
         .red { background-color: #ff5252; }
@@ -82,42 +82,10 @@
         .green { background-color: #0f9d58; }
         .yellow { background-color: #ffeb3b; }
         .purple { background-color: #9c27b0; }
-        
-        /* Special bricks */
-        .diamond {
-            background: linear-gradient(135deg, #b9f2ff 0%, #67c7eb 50%, #3a99e0 100%);
-            box-shadow: 0 0 10px #67c7eb;
-            position: relative;
-        }
-        
-        .diamond::after {
-            content: '💎';
-            font-size: 16px;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-        
-        .gold {
-            background: linear-gradient(135deg, #fcf175 0%, #e7b627 50%, #c09112 100%);
-            box-shadow: 0 0 10px #e7b627;
-            position: relative;
-        }
-        
-        .gold::after {
-            content: '🏆';
-            font-size: 16px;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
 
-        .controls {
-            margin-top: 20px;
-            display: flex;
-            gap: 10px;
+        .selected {
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
         }
 
         button {
@@ -127,421 +95,84 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-        }
-        
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        .smash-button {
-            background-color: #9c27b0;
-        }
-        
-        .hint-button {
-            background-color: #4285f4;
-        }
-        
-        /* Animation for smash */
-        @keyframes smashAnimation {
-            0% {
-                transform: scale(1);
-                opacity: 1;
-            }
-            40% {
-                transform: scale(1.3);
-                opacity: 0.8;
-            }
-            100% {
-                transform: scale(0);
-                opacity: 0;
-            }
-        }
-        
-        .smashing {
-            animation: smashAnimation 0.4s forwards;
-        }
-        
-        /* Score popups */
-        .score-popup {
-            position: absolute;
-            font-weight: bold;
-            color: white;
-            text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
-            z-index: 100;
-            pointer-events: none;
-            animation: floatUp 1s forwards;
-        }
-        
-        @keyframes floatUp {
-            0% { opacity: 0; transform: translateY(0); }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { opacity: 0; transform: translateY(-20px); }
+            margin: 5px;
         }
 
-        /* Add CSS for the selected brick */
-        .cell .brick.selected,
-        .cell.selected .brick {
-            transform: scale(1.15);
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.7), 0 0 20px rgba(255, 255, 255, 0.4);
-            z-index: 5;
-        }
-
-        /* Game board responsive sizing */
-        @media (max-width: 500px) {
-            #game-board {
-                max-width: 90vw;
-            }
-        }
-
-        /* Add a simple explanation below the game */
-        .game-explanation {
-            font-size: 14px;
-            color: #666;
-            text-align: center;
-            margin-top: 20px;
-            padding: 0 15px;
-        }
-
-        .special-brick-info {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 10px;
-        }
-
-        .special-brick-item {
-            display: flex;
-            align-items: center;
-            font-size: 12px;
-        }
-
-        .special-brick-icon {
-            width: 20px;
-            height: 20px;
-            margin-right: 5px;
-            border-radius: 4px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .diamond-icon {
-            background: linear-gradient(135deg, #b9f2ff 0%, #67c7eb 50%, #3a99e0 100%);
-        }
-
-        .gold-icon {
-            background: linear-gradient(135deg, #fcf175 0%, #e7b627 50%, #c09112 100%);
-        }
-
-        /* Animations for swapping bricks */
-        @keyframes slideToSwap {
-            0% {
-                transform: translate(0, 0);
-            }
-            100% {
-                transform: translate(var(--targetX), var(--targetY));
-            }
-        }
-
-        .swapping {
-            animation: slideToSwap 0.3s ease-in-out;
-            z-index: 10;
-            position: relative;
-        }
-
-        /* Animation for falling bricks */
-        @keyframes fallDown {
-            0% {
-                transform: translateY(calc(var(--fall-distance) * -1));
-                opacity: 0.7;
-            }
-            100% {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        .falling {
-            animation: fallDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        /* Enhanced smash animation */
-        @keyframes smashAnimation {
-            0% {
-                transform: scale(1);
-                opacity: 1;
-            }
-            40% {
-                transform: scale(1.3);
-                opacity: 0.8;
-                filter: brightness(1.5);
-            }
-            70% {
-                transform: scale(0.7);
-                opacity: 0.6;
-                filter: brightness(1.2);
-            }
-            100% {
-                transform: scale(0);
-                opacity: 0;
-            }
-        }
-
-        /* Particle effects */
-        .particle {
-            position: absolute;
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 20;
-            opacity: 0.8;
-            animation: particleFly 0.8s ease-out forwards;
-        }
-
-        @keyframes particleFly {
-            0% {
-                transform: translate(0, 0) scale(1);
-                opacity: 0.8;
-            }
-            100% {
-                transform: translate(var(--moveX), var(--moveY)) scale(0);
-                opacity: 0;
-            }
-        }
-
-        /* Shine effect for special bricks */
-        .diamond::before, .gold::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 50%;
-            height: 100%;
-            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
-            transform: skewX(-25deg);
-            animation: shine 3s infinite;
-        }
-
-        @keyframes shine {
-            0% {
-                left: -100%;
-            }
-            20%, 100% {
-                left: 150%;
-            }
-        }
-
-        /* Animation for new bricks */
-        @keyframes dropIn {
-            0% {
-                transform: translateY(-100%);
-                opacity: 0;
-            }
-            70% {
-                transform: translateY(10%);
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        .new-brick {
-            animation: dropIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        /* Help popup styles */
-        .help-popup {
+        .game-over, .level-complete {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 80%;
-            max-width: 500px;
             background-color: rgba(0, 0, 0, 0.9);
-            color: #fff;
+            color: white;
             padding: 20px;
             border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-            z-index: 1000;
+            text-align: center;
             display: none;
         }
-        
-        .help-popup.show {
+
+        .game-over.show, .level-complete.show {
             display: block;
-            animation: fadeIn 0.3s ease-in-out;
-        }
-        
-        .help-popup h2 {
-            margin-top: 0;
-            color: #4CAF50;
-            text-align: center;
-        }
-        
-        .help-popup ul {
-            padding-left: 20px;
-        }
-        
-        .help-popup li {
-            margin-bottom: 10px;
-        }
-        
-        .help-popup .close-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: none;
-            border: none;
-            color: #fff;
-            font-size: 20px;
-            cursor: pointer;
-        }
-        
-        .help-button {
-            background-color: #333;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-right: 5px;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
         }
 
-        .hint-highlight {
-            animation: pulse 1s infinite alternate;
-            z-index: 10;
-        }
-        
-        @keyframes pulse {
-            0% {
-                box-shadow: 0 0 5px 2px rgba(66, 133, 244, 0.7);
-            }
-            100% {
-                box-shadow: 0 0 15px 5px rgba(66, 133, 244, 0.9);
-            }
-        }
-        
-        .notification {
-            animation-fill-mode: forwards;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translate(-50%, -70%); }
-            to { opacity: 1; transform: translate(-50%, -50%); }
-        }
-        
-        @keyframes fadeOut {
-            from { opacity: 1; }
-            to { opacity: 0; }
-        }
-        
-        #game-over-overlay {
-            text-align: center;
-        }
-        
-        #game-over-overlay h2 {
-            color: #e86a92;
-            margin-bottom: 20px;
-        }
-        
-        #restart-btn {
-            margin-top: 20px;
-            padding: 10px 30px;
-            background-color: #e86a92;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        
-        #restart-btn:hover {
-            background-color: #d25c82;
+        .level-info {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            color: #666;
         }
     </style>
 </head>
 <body>
     <div class="game-container">
-        <h1>Angela's Brick Breaker</h1>
+        <h1>Brick Breaker Levels</h1>
+        
+        <div class="level-info">
+            Level: <span id="level">1</span>
+        </div>
         
         <div class="game-info">
             <div>Score: <span id="score">0</span></div>
             <div>Moves: <span id="moves">0</span></div>
-            <div>Smashes: <span id="smashes">1</span></div>
         </div>
         
         <div id="game-board"></div>
         
         <div class="controls">
             <button id="new-game-btn">New Game</button>
-            <button id="smash-btn" class="smash-button">Screen Smash</button>
-            <button id="help-btn" class="help-button">❓ Help</button>
-        </div>
-        
-        <div class="game-explanation">
-            <p>Match 3 or more bricks of the same color to clear them. Use the Screen Smash button to clear 9 random bricks at once!</p>
-            <div class="special-brick-info">
-                <div class="special-brick-item">
-                    <div class="special-brick-icon diamond-icon">💎</div>
-                    <span>Diamond: 50 points</span>
-                </div>
-                <div class="special-brick-item">
-                    <div class="special-brick-icon gold-icon">🏆</div>
-                    <span>Gold: 30 points</span>
-                </div>
-            </div>
+            <button id="undo-btn" disabled>Undo Move</button>
+            <button id="next-level-btn" style="display: none;">Next Level</button>
         </div>
     </div>
 
-    <!-- Help popup -->
-    <div id="help-popup" class="help-popup">
-        <button class="close-btn">✖</button>
-        <h2>How to Play</h2>
-        <ul>
-            <li><strong>Basic Gameplay:</strong> Match 3 or more of the same bricks by swapping adjacent bricks. Click one brick, then click an adjacent brick to swap.</li>
-            <li><strong>Special Bricks:</strong>
-                <ul>
-                    <li>💎 Diamond Bricks: Worth 50 points!</li>
-                    <li>🏆 Gold Bricks: Worth 30 points!</li>
-                </ul>
-            </li>
-            <li><strong>Screen Smash:</strong> Use Screen Smash to break 9 random bricks. Recharges after 1000 points.</li>
-            <li><strong>Hint:</strong> Click the Hint button to highlight a valid move. You get 3 hints, and they recharge every 500 points.</li>
-            <li><strong>Animations:</strong> Watch for special animations when matching special bricks!</li>
-            <li><strong>Sound Effects:</strong> Toggle sound effects with the sound button.</li>
-            <li><strong>Goal:</strong> Get the highest score possible before running out of moves!</li>
-        </ul>
+    <div id="game-over" class="game-over">
+        <h2>Game Over!</h2>
+        <p>No more valid moves available to clear the board.</p>
+        <p>Final Score: <span id="final-score">0</span></p>
+        <button id="restart-btn">Play Again</button>
+    </div>
+
+    <div id="level-complete" class="level-complete">
+        <h2>Level Complete!</h2>
+        <p>You cleared the board!</p>
+        <p>Score: <span id="level-score">0</span></p>
+        <button id="next-level-complete-btn">Next Level</button>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Game configuration
             const config = {
-                rows: 8,
-                columns: 8,
+                rows: 6,
+                columns: 6,
                 brickTypes: ['red', 'blue', 'green', 'yellow', 'purple'],
-                specialBricks: ['diamond', 'gold'],
-                specialBrickChance: 0.08, // 8% chance for a special brick
-                pointValues: {
-                    regular: 10,
-                    diamond: 50,
-                    gold: 30
-                },
-                initialSmashes: 1,
-                initialHints: 3,
-                hintRechargePoints: 500,
-                smashRechargePoints: 1000,
-                lastHintRechargeScore: 0,
-                lastSmashRechargeScore: 0
+                // Predefined valid seeds for board generation
+                validSeeds: [
+                    [1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1],
+                    [2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2],
+                    [3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3],
+                    [4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4],
+                    [5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5]
+                ]
             };
             
             // Game state
@@ -549,60 +180,32 @@
                 board: [],
                 score: 0,
                 moves: 0,
-                smashesRemaining: config.initialSmashes,
-                hintsRemaining: config.initialHints,
+                level: 1,
+                selectedCell: null,
                 isAnimating: false,
-                lastHintRechargeScore: 0,
-                lastSmashRechargeScore: 0,
-                gameOver: false
+                previousState: null, // Store previous state for undo
+                currentSeedIndex: 0 // Track which seed we're using
             };
             
             // DOM elements
             const gameBoard = document.getElementById('game-board');
             const scoreElement = document.getElementById('score');
             const movesElement = document.getElementById('moves');
-            const smashesElement = document.getElementById('smashes');
+            const levelElement = document.getElementById('level');
             const newGameButton = document.getElementById('new-game-btn');
-            const smashButton = document.getElementById('smash-btn');
-            const helpButton = document.getElementById('help-btn');
-            const helpPopup = document.getElementById('help-popup');
-            const closeHelpBtn = document.querySelector('.help-popup .close-btn');
+            const undoButton = document.getElementById('undo-btn');
+            const nextLevelButton = document.getElementById('next-level-btn');
+            const gameOverOverlay = document.getElementById('game-over');
+            const levelCompleteOverlay = document.getElementById('level-complete');
+            const restartButton = document.getElementById('restart-btn');
+            const nextLevelCompleteButton = document.getElementById('next-level-complete-btn');
             
-            // Create hint button
-            const hintButton = document.createElement('button');
-            hintButton.id = 'hint-btn';
-            hintButton.classList.add('hint-button');
-            hintButton.textContent = 'Hint';
-            
-            // Insert hint button after smash button
-            smashButton.after(hintButton);
-            
-            // Create hints counter display
-            const hintsElement = document.createElement('div');
-            hintsElement.textContent = 'Hints: ';
-            const hintsRemainingElement = document.createElement('span');
-            hintsRemainingElement.id = 'hints';
-            hintsRemainingElement.textContent = config.initialHints;
-            hintsElement.appendChild(hintsRemainingElement);
-            
-            // Add hints to game info
-            const gameInfo = document.querySelector('.game-info');
-            gameInfo.appendChild(hintsElement);
-            
-            // Create game over overlay
-            const gameOverOverlay = document.createElement('div');
-            gameOverOverlay.id = 'game-over-overlay';
-            gameOverOverlay.classList.add('help-popup');
-            gameOverOverlay.innerHTML = `
-                <h2>Game Over!</h2>
-                <p>No more valid moves available.</p>
-                <p>Final Score: <span id="final-score">0</span></p>
-                <button id="restart-btn">Play Again</button>
-            `;
-            document.body.appendChild(gameOverOverlay);
-            
-            // Add the restart button event listener
-            document.getElementById('restart-btn').addEventListener('click', () => {
+            // Event listeners
+            newGameButton.addEventListener('click', initGame);
+            undoButton.addEventListener('click', undoMove);
+            nextLevelButton.addEventListener('click', nextLevel);
+            nextLevelCompleteButton.addEventListener('click', nextLevel);
+            restartButton.addEventListener('click', () => {
                 gameOverOverlay.classList.remove('show');
                 initGame();
             });
@@ -610,27 +213,20 @@
             // Initialize the game
             function initGame() {
                 console.log('Initializing game...');
-                
                 // Reset state
                 state.board = [];
                 state.score = 0;
                 state.moves = 0;
-                state.smashesRemaining = config.initialSmashes;
-                state.hintsRemaining = config.initialHints;
+                state.selectedCell = null;
                 state.isAnimating = false;
-                state.lastHintRechargeScore = 0;
-                state.lastSmashRechargeScore = 0;
-                state.gameOver = false;
+                state.previousState = null;
+                state.currentSeedIndex = 0;
                 
                 // Update UI
                 scoreElement.textContent = state.score;
                 movesElement.textContent = state.moves;
-                smashesElement.textContent = state.smashesRemaining;
-                hintsRemainingElement.textContent = state.hintsRemaining;
-                
-                // Update button states
-                updateSmashButton();
-                updateHintButton();
+                levelElement.textContent = state.level;
+                undoButton.disabled = true;
                 
                 // Clear the board
                 gameBoard.innerHTML = '';
@@ -639,296 +235,109 @@
                 gameBoard.style.gridTemplateColumns = `repeat(${config.columns}, 1fr)`;
                 gameBoard.style.gridTemplateRows = `repeat(${config.rows}, 1fr)`;
                 
-                // Create the board data
+                // Create the board
+                console.log('Creating board...');
                 createBoard();
+                console.log('Board created:', state.board);
+                
+                // Check if board has valid moves
+                if (!isBoardWinnable()) {
+                    console.log('Board has no valid moves, recreating...');
+                    initGame(); // Recursively try again
+                    return;
+                }
                 
                 // Render the board
+                console.log('Rendering board...');
                 renderBoard();
+                console.log('Board rendered');
                 
-                console.log('Game initialized!');
+                // Hide overlays
+                gameOverOverlay.classList.remove('show');
+                levelCompleteOverlay.classList.remove('show');
+                nextLevelButton.style.display = 'none';
             }
             
             // Create the board data
             function createBoard() {
+                console.log('Starting board creation...');
+                
+                // Get the current seed
+                const seed = config.validSeeds[state.currentSeedIndex];
+                
+                // Create board using the seed
                 for (let row = 0; row < config.rows; row++) {
                     state.board[row] = [];
                     for (let col = 0; col < config.columns; col++) {
-                        let brickType;
-                        
-                        // Determine if we should create a special brick
-                        if (Math.random() < config.specialBrickChance) {
-                            const specialIndex = Math.floor(Math.random() * config.specialBricks.length);
-                            brickType = config.specialBricks[specialIndex];
-                        } else {
-                            const regularIndex = Math.floor(Math.random() * config.brickTypes.length);
-                            brickType = config.brickTypes[regularIndex];
-                        }
-                        
-                        state.board[row][col] = {
-                            type: brickType,
-                            row: row,
-                            col: col
-                        };
+                        const seedIndex = row * config.columns + col;
+                        const typeIndex = seed[seedIndex] - 1; // Convert 1-based to 0-based
+                        const type = config.brickTypes[typeIndex];
+                        state.board[row][col] = { type, row, col };
                     }
                 }
+                
+                // Rotate the seed index for next level
+                state.currentSeedIndex = (state.currentSeedIndex + 1) % config.validSeeds.length;
+                
+                console.log('Board created using seed:', state.currentSeedIndex);
             }
             
-            // Render the board to the DOM
-            function renderBoard() {
-                gameBoard.innerHTML = '';
+            // Check if the board is solvable
+            function isSolvable() {
+                // Create a copy of the board to simulate moves
+                const boardCopy = JSON.parse(JSON.stringify(state.board));
                 
+                // Try to clear the board
+                let moves = 0;
+                let maxMoves = 100; // Prevent infinite loops
+                
+                while (hasBricks(boardCopy) && moves < maxMoves) {
+                    const matches = findMatchesInBoard(boardCopy);
+                    if (matches.length === 0) {
+                        return false; // No matches available, board is not solvable
+                    }
+                    
+                    // Process matches
+                    matches.forEach(match => {
+                        match.bricks.forEach(({ row, col }) => {
+                            boardCopy[row][col] = null;
+                        });
+                    });
+                    
+                    moves++;
+                }
+                
+                return !hasBricks(boardCopy);
+            }
+            
+            // Check if board has any bricks
+            function hasBricks(board) {
                 for (let row = 0; row < config.rows; row++) {
                     for (let col = 0; col < config.columns; col++) {
-                        const brick = state.board[row][col];
-                        
-                        // Create cell element
-                        const cell = document.createElement('div');
-                        cell.classList.add('cell');
-                        cell.setAttribute('data-row', row);
-                        cell.setAttribute('data-col', col);
-                        
-                        // Create brick element
-                        const brickElement = document.createElement('div');
-                        brickElement.classList.add('brick', brick.type);
-                        
-                        // Add new-brick class for bricks at the top rows (new ones)
-                        if (row < 2 && !brick.animated) {
-                            brickElement.classList.add('new-brick');
-                            brick.animated = true; // Mark it as animated so it doesn't get the class again
+                        if (board[row][col] !== null) {
+                            return true;
                         }
-                        
-                        // Add click handler for swapping
-                        cell.addEventListener('click', () => handleCellClick(row, col));
-                        
-                        // Add brick to cell
-                        cell.appendChild(brickElement);
-                        
-                        // Add to game board
-                        gameBoard.appendChild(cell);
                     }
                 }
+                return false;
             }
             
-            // Get cell element for a position
-            function getCellElement(row, col) {
-                return document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
-            }
-            
-            // Update score with ability recharge checks
-            function updateScore(points) {
-                state.score += points;
-                scoreElement.textContent = state.score;
-                
-                // Check for hint recharge
-                if (state.hintsRemaining < config.initialHints && 
-                    state.score >= state.lastHintRechargeScore + config.hintRechargePoints) {
-                    state.hintsRemaining++;
-                    state.lastHintRechargeScore = state.score;
-                    hintsRemainingElement.textContent = state.hintsRemaining;
-                    updateHintButton();
-                    
-                    // Show hint recharge notification
-                    showNotification('Hint Recharged!');
-                }
-                
-                // Check for smash recharge
-                if (state.smashesRemaining === 0 && 
-                    state.score >= state.lastSmashRechargeScore + config.smashRechargePoints) {
-                    state.smashesRemaining = 1;
-                    state.lastSmashRechargeScore = state.score;
-                    smashesElement.textContent = state.smashesRemaining;
-                    updateSmashButton();
-                    
-                    // Show smash recharge notification
-                    showNotification('Screen Smash Recharged!');
-                }
-                
-                // Create floating score popup
-                const scorePopup = document.createElement('div');
-                scorePopup.classList.add('score-popup');
-                scorePopup.textContent = `+${points}`;
-                scorePopup.style.left = '50%';
-                scorePopup.style.top = '30%';
-                scorePopup.style.transform = 'translate(-50%, -50%)';
-                
-                gameBoard.appendChild(scorePopup);
-                
-                // Remove popup after animation
-                setTimeout(() => {
-                    scorePopup.remove();
-                }, 1000);
-            }
-            
-            // Show notification
-            function showNotification(message) {
-                const notification = document.createElement('div');
-                notification.classList.add('notification');
-                notification.textContent = message;
-                notification.style.position = 'absolute';
-                notification.style.top = '20%';
-                notification.style.left = '50%';
-                notification.style.transform = 'translate(-50%, -50%)';
-                notification.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-                notification.style.color = 'white';
-                notification.style.padding = '10px 20px';
-                notification.style.borderRadius = '5px';
-                notification.style.zIndex = '1000';
-                notification.style.animation = 'fadeIn 0.3s, fadeOut 0.3s 2s forwards';
-                
-                document.body.appendChild(notification);
-                
-                setTimeout(() => {
-                    notification.remove();
-                }, 2500);
-            }
-            
-            // Handle cell click for swapping
-            let selectedCell = null;
-
-            function handleCellClick(row, col) {
-                if (state.isAnimating) return;
-                
-                const cell = getCellElement(row, col);
-                
-                // If no cell is selected, select this one
-                if (!selectedCell) {
-                    selectedCell = { row, col, element: cell };
-                    cell.classList.add('selected');
-                    return;
-                }
-                
-                // If same cell is clicked, deselect it
-                if (selectedCell.row === row && selectedCell.col === col) {
-                    cell.classList.remove('selected');
-                    selectedCell = null;
-                    return;
-                }
-                
-                // Check if cells are adjacent
-                const isAdjacent = (
-                    (Math.abs(selectedCell.row - row) === 1 && selectedCell.col === col) ||
-                    (Math.abs(selectedCell.col - col) === 1 && selectedCell.row === row)
-                );
-                
-                if (isAdjacent) {
-                    // Attempt to swap
-                    swapBricks(selectedCell.row, selectedCell.col, row, col);
-                } else {
-                    // Deselect previous cell and select the new one
-                    selectedCell.element.classList.remove('selected');
-                    cell.classList.add('selected');
-                    selectedCell = { row, col, element: cell };
-                }
-            }
-
-            // Swap bricks and check if it creates a match
-            function swapBricks(row1, col1, row2, col2) {
-                // Don't swap if they're not adjacent
-                if (!(
-                    (Math.abs(row1 - row2) === 1 && col1 === col2) ||
-                    (Math.abs(col1 - col2) === 1 && row1 === row2)
-                )) {
-                    return;
-                }
-                
-                // Play swap sound
-                playSound('swap');
-                
-                // Get elements
-                const cell1 = getCellElement(row1, col1);
-                const cell2 = getCellElement(row2, col2);
-                
-                state.isAnimating = true;
-                
-                // Remove selection
-                cell1.classList.remove('selected');
-                cell2.classList.remove('selected');
-                selectedCell = null;
-                
-                // Get brick elements
-                const brick1 = cell1.querySelector('.brick');
-                const brick2 = cell2.querySelector('.brick');
-                
-                // Get positions for animation
-                const rect1 = brick1.getBoundingClientRect();
-                const rect2 = brick2.getBoundingClientRect();
-                
-                // Calculate the distance to move
-                const deltaX = rect2.left - rect1.left;
-                const deltaY = rect2.top - rect1.top;
-                
-                // Apply CSS variables for animation
-                brick1.style.setProperty('--targetX', `${deltaX}px`);
-                brick1.style.setProperty('--targetY', `${deltaY}px`);
-                brick2.style.setProperty('--targetX', `${-deltaX}px`);
-                brick2.style.setProperty('--targetY', `${-deltaY}px`);
-                
-                // Add swapping animation class
-                brick1.classList.add('swapping');
-                brick2.classList.add('swapping');
-                
-                // Swap in the data model
-                const temp = state.board[row1][col1];
-                state.board[row1][col1] = state.board[row2][col2];
-                state.board[row2][col2] = temp;
-                
-                // Update row and col properties
-                if (state.board[row1][col1]) state.board[row1][col1].row = row1;
-                if (state.board[row1][col1]) state.board[row1][col1].col = col1;
-                if (state.board[row2][col2]) state.board[row2][col2].row = row2;
-                if (state.board[row2][col2]) state.board[row2][col2].col = col2;
-                
-                // Wait for animation to complete
-                setTimeout(() => {
-                    // Re-render the board after the animation
-                    renderBoard();
-                    
-                    // Check for matches
-                    setTimeout(() => {
-                        const matches = findMatches();
-                        
-                        if (matches.length > 0) {
-                            // Valid move - there are matches
-                            state.moves++;
-                            movesElement.textContent = state.moves;
-                            
-                            // Process the matches
-                            processMatches(matches);
-                        } else {
-                            // Invalid move - no matches, swap back
-                            const temp = state.board[row1][col1];
-                            state.board[row1][col1] = state.board[row2][col2];
-                            state.board[row2][col2] = temp;
-                            
-                            // Update row and col properties
-                            if (state.board[row1][col1]) state.board[row1][col1].row = row1;
-                            if (state.board[row1][col1]) state.board[row1][col1].col = col1;
-                            if (state.board[row2][col2]) state.board[row2][col2].row = row2;
-                            if (state.board[row2][col2]) state.board[row2][col2].col = col2;
-                            
-                            // Re-render the board
-                            renderBoard();
-                            state.isAnimating = false;
-                        }
-                    }, 100);
-                }, 300);
-            }
-
-            // Find matches on the board
-            function findMatches() {
+            // Find matches in a given board
+            function findMatchesInBoard(board) {
                 const matches = [];
                 
                 // Check horizontal matches
                 for (let row = 0; row < config.rows; row++) {
                     for (let col = 0; col < config.columns - 2; col++) {
-                        if (!state.board[row][col]) continue;
+                        if (!board[row][col] || !board[row][col + 1] || !board[row][col + 2]) {
+                            continue;
+                        }
                         
-                        const type = state.board[row][col].type;
+                        const type = board[row][col].type;
                         
-                        if (state.board[row][col + 1]?.type === type && 
-                            state.board[row][col + 2]?.type === type) {
+                        if (board[row][col + 1].type === type && 
+                            board[row][col + 2].type === type) {
                             
-                            // We found a match of at least 3 horizontally
                             const match = { 
                                 bricks: [
                                     { row, col },
@@ -937,16 +346,13 @@
                                 ]
                             };
                             
-                            // Check if there are more in the match
                             let nextCol = col + 3;
-                            while (nextCol < config.columns && state.board[row][nextCol]?.type === type) {
+                            while (nextCol < config.columns && board[row][nextCol] && board[row][nextCol].type === type) {
                                 match.bricks.push({ row, col: nextCol });
                                 nextCol++;
                             }
                             
                             matches.push(match);
-                            
-                            // Skip columns we've already included in this match
                             col = nextCol - 1;
                         }
                     }
@@ -955,14 +361,15 @@
                 // Check vertical matches
                 for (let col = 0; col < config.columns; col++) {
                     for (let row = 0; row < config.rows - 2; row++) {
-                        if (!state.board[row][col]) continue;
+                        if (!board[row][col] || !board[row + 1][col] || !board[row + 2][col]) {
+                            continue;
+                        }
                         
-                        const type = state.board[row][col].type;
+                        const type = board[row][col].type;
                         
-                        if (state.board[row + 1][col]?.type === type && 
-                            state.board[row + 2][col]?.type === type) {
+                        if (board[row + 1][col].type === type && 
+                            board[row + 2][col].type === type) {
                             
-                            // We found a match of at least 3 vertically
                             const match = {
                                 bricks: [
                                     { row, col },
@@ -971,16 +378,13 @@
                                 ]
                             };
                             
-                            // Check if there are more in the match
                             let nextRow = row + 3;
-                            while (nextRow < config.rows && state.board[nextRow][col]?.type === type) {
+                            while (nextRow < config.rows && board[nextRow][col] && board[nextRow][col].type === type) {
                                 match.bricks.push({ row: nextRow, col });
                                 nextRow++;
                             }
                             
                             matches.push(match);
-                            
-                            // Skip rows we've already included in this match
                             row = nextRow - 1;
                         }
                     }
@@ -988,630 +392,312 @@
                 
                 return matches;
             }
-
-            // Create particle effects for matched bricks
-            function createParticles(cell, type) {
-                const rect = cell.getBoundingClientRect();
-                const boardRect = gameBoard.getBoundingClientRect();
-                
-                // Position relative to the game board
-                const centerX = rect.left - boardRect.left + rect.width / 2;
-                const centerY = rect.top - boardRect.top + rect.height / 2;
-                
-                // Get the color based on brick type
-                let color;
-                switch (type) {
-                    case 'red': color = '#ff5252'; break;
-                    case 'blue': color = '#4285f4'; break;
-                    case 'green': color = '#0f9d58'; break;
-                    case 'yellow': color = '#ffeb3b'; break;
-                    case 'purple': color = '#9c27b0'; break;
-                    case 'diamond': color = '#67c7eb'; break;
-                    case 'gold': color = '#e7b627'; break;
-                    default: color = '#ffffff';
-                }
-                
-                // Create more particles for special bricks
-                const particleCount = (type === 'diamond' || type === 'gold') ? 15 : 8;
-                
-                // Create particles
-                for (let i = 0; i < particleCount; i++) {
-                    const particle = document.createElement('div');
-                    particle.classList.add('particle');
-                    particle.style.backgroundColor = color;
-                    particle.style.left = `${centerX}px`;
-                    particle.style.top = `${centerY}px`;
-                    
-                    // Random movement direction
-                    const angle = Math.random() * Math.PI * 2;
-                    const distance = 20 + Math.random() * 40;
-                    const moveX = Math.cos(angle) * distance;
-                    const moveY = Math.sin(angle) * distance;
-                    
-                    particle.style.setProperty('--moveX', `${moveX}px`);
-                    particle.style.setProperty('--moveY', `${moveY}px`);
-                    
-                    gameBoard.appendChild(particle);
-                    
-                    // Remove after animation
-                    setTimeout(() => {
-                        particle.remove();
-                    }, 800);
-                }
-            }
-
-            // Function to find matches in the current board state
-            function processMatches(matches) {
-                let pointsEarned = 0;
-                
-                if (matches.length > 0) {
-                    // Play match sound
-                    if (hasSpecialMatch(matches)) {
-                        playSound('special');
-                    } else {
-                        playSound('match');
-                    }
-                    
-                    // For each match
-                    matches.forEach(match => {
-                        match.bricks.forEach(({ row, col }) => {
-                            const brick = state.board[row][col];
-                            const cell = getCellElement(row, col);
-                            
-                            if (brick && cell) {
-                                let brickPoints;
-                                
-                                if (brick.type === 'diamond') {
-                                    brickPoints = config.pointValues.diamond;
-                                } else if (brick.type === 'gold') {
-                                    brickPoints = config.pointValues.gold;
-                                } else {
-                                    brickPoints = config.pointValues.regular;
-                                }
-                                
-                                pointsEarned += brickPoints;
-                                
-                                // Create score popup
-                                const scorePopup = document.createElement('div');
-                                scorePopup.classList.add('score-popup');
-                                scorePopup.textContent = `+${brickPoints}`;
-                                scorePopup.style.position = 'absolute';
-                                scorePopup.style.left = '50%';
-                                scorePopup.style.top = '50%';
-                                scorePopup.style.transform = 'translate(-50%, -50%)';
-                                cell.appendChild(scorePopup);
-                                
-                                // Add particle effects
-                                createParticles(cell, brick.type);
-                                
-                                // Add dissolve animation
-                                const brickElement = cell.querySelector('.brick');
-                                if (brickElement) {
-                                    brickElement.classList.add('smashing');
-                                }
-                                
-                                // Mark as empty
-                                state.board[row][col] = null;
-                                
-                                // Remove after animation
-                                setTimeout(() => {
-                                    cell.innerHTML = '';
-                                }, 400);
-                            }
-                        });
-                    });
-                    
-                    // Update score
-                    setTimeout(() => {
-                        updateScore(pointsEarned);
-                        
-                        // Apply gravity after all animations
-                        setTimeout(() => {
-                            applyGravity();
-                            
-                            // Check for cascading matches after gravity
-                            setTimeout(() => {
-                                const newMatches = findMatches();
-                                if (newMatches.length > 0) {
-                                    processMatches(newMatches);
-                                } else {
-                                    state.isAnimating = false;
-                                }
-                            }, 500);
-                        }, 500);
-                    }, 500);
-                }
-                
-                return pointsEarned;
+            
+            // Move to next level
+            function nextLevel() {
+                state.level++;
+                initGame();
             }
             
-            // Check if any match contains a special brick
-            function hasSpecialMatch(matches) {
-                for (const match of matches) {
-                    for (const {row, col} of match.bricks) {
+            // Check if level is complete
+            function checkLevelComplete() {
+                if (!hasBricks(state.board)) {
+                    levelCompleteOverlay.classList.add('show');
+                    document.getElementById('level-score').textContent = state.score;
+                }
+            }
+            
+            // Render the board
+            function renderBoard() {
+                gameBoard.innerHTML = ''; // Clear the board first
+                
+                for (let row = 0; row < config.rows; row++) {
+                    for (let col = 0; col < config.columns; col++) {
                         const brick = state.board[row][col];
-                        if (brick && (brick.type === 'diamond' || brick.type === 'gold')) {
-                            return true;
+                        
+                        const cell = document.createElement('div');
+                        cell.classList.add('cell');
+                        cell.setAttribute('data-row', row);
+                        cell.setAttribute('data-col', col);
+                        
+                        if (brick) {
+                            const brickElement = document.createElement('div');
+                            brickElement.classList.add('brick', brick.type);
+                            cell.appendChild(brickElement);
+                        }
+                        
+                        cell.addEventListener('click', () => handleCellClick(row, col));
+                        gameBoard.appendChild(cell);
+                    }
+                }
+            }
+            
+            // Handle cell click
+            function handleCellClick(row, col) {
+                console.log('Cell clicked:', row, col);
+                if (state.isAnimating) {
+                    console.log('Game is animating, ignoring click');
+                    return;
+                }
+                
+                // Don't allow clicking empty spaces
+                if (!state.board[row][col]) {
+                    console.log('Empty space clicked, ignoring');
+                    return;
+                }
+                
+                const cell = gameBoard.children[row * config.columns + col];
+                if (!cell) {
+                    console.log('Cell element not found');
+                    state.isAnimating = false;
+                    return;
+                }
+                
+                // If no cell is selected, select this one
+                if (!state.selectedCell) {
+                    console.log('Selecting cell:', row, col);
+                    state.selectedCell = { row, col, element: cell };
+                    cell.querySelector('.brick').classList.add('selected');
+                    return;
+                }
+                
+                // If same cell is clicked, deselect it
+                if (state.selectedCell.row === row && state.selectedCell.col === col) {
+                    console.log('Deselecting cell:', row, col);
+                    cell.querySelector('.brick').classList.remove('selected');
+                    state.selectedCell = null;
+                    return;
+                }
+                
+                // Check if cells are adjacent
+                const isAdjacent = (
+                    (Math.abs(state.selectedCell.row - row) === 1 && state.selectedCell.col === col) ||
+                    (Math.abs(state.selectedCell.col - col) === 1 && state.selectedCell.row === row)
+                );
+                
+                if (isAdjacent) {
+                    console.log('Swapping cells:', state.selectedCell.row, state.selectedCell.col, 'with', row, col);
+                    // Attempt to swap
+                    swapBricks(state.selectedCell.row, state.selectedCell.col, row, col);
+                } else {
+                    console.log('Cells not adjacent, selecting new cell');
+                    // Deselect previous cell and select the new one
+                    state.selectedCell.element.querySelector('.brick').classList.remove('selected');
+                    cell.querySelector('.brick').classList.add('selected');
+                    state.selectedCell = { row, col, element: cell };
+                }
+            }
+            
+            // Find matches in the current board
+            function findMatches() {
+                console.log('Finding matches in current board');
+                const matches = findMatchesInBoard(state.board);
+                console.log('Found matches:', matches);
+                return matches;
+            }
+            
+            // Store current state before making a move
+            function storePreviousState() {
+                state.previousState = {
+                    board: JSON.parse(JSON.stringify(state.board)),
+                    score: state.score,
+                    moves: state.moves
+                };
+                undoButton.disabled = false;
+            }
+
+            // Undo the last move
+            function undoMove() {
+                if (!state.previousState) return;
+                
+                state.board = state.previousState.board;
+                state.score = state.previousState.score;
+                state.moves = state.previousState.moves;
+                
+                // Update UI
+                scoreElement.textContent = state.score;
+                movesElement.textContent = state.moves;
+                renderBoard();
+                
+                // Clear previous state and disable undo button
+                state.previousState = null;
+                undoButton.disabled = true;
+            }
+
+            // Check if the board is still winnable
+            function isBoardWinnable() {
+                // Create a copy of the board to simulate moves
+                const boardCopy = JSON.parse(JSON.stringify(state.board));
+                
+                // First, check if there are any immediate matches
+                const matches = findMatchesInBoard(boardCopy);
+                if (matches.length > 0) {
+                    return true;
+                }
+                
+                // Try all possible swaps to find a match
+                for (let row = 0; row < config.rows; row++) {
+                    for (let col = 0; col < config.columns; col++) {
+                        // Skip empty spaces
+                        if (!boardCopy[row][col]) continue;
+                        
+                        // Try swapping with right neighbor
+                        if (col < config.columns - 1 && boardCopy[row][col + 1]) {
+                            // Swap
+                            [boardCopy[row][col].type, boardCopy[row][col + 1].type] = 
+                            [boardCopy[row][col + 1].type, boardCopy[row][col].type];
+                            
+                            // Check if this creates a match that can lead to clearing the board
+                            if (isSolvable(boardCopy)) {
+                                return true;
+                            }
+                            
+                            // Swap back
+                            [boardCopy[row][col].type, boardCopy[row][col + 1].type] = 
+                            [boardCopy[row][col + 1].type, boardCopy[row][col].type];
+                        }
+                        
+                        // Try swapping with bottom neighbor
+                        if (row < config.rows - 1 && boardCopy[row + 1][col]) {
+                            // Swap
+                            [boardCopy[row][col].type, boardCopy[row + 1][col].type] = 
+                            [boardCopy[row + 1][col].type, boardCopy[row][col].type];
+                            
+                            // Check if this creates a match that can lead to clearing the board
+                            if (isSolvable(boardCopy)) {
+                                return true;
+                            }
+                            
+                            // Swap back
+                            [boardCopy[row][col].type, boardCopy[row + 1][col].type] = 
+                            [boardCopy[row + 1][col].type, boardCopy[row][col].type];
                         }
                     }
                 }
+                
                 return false;
             }
 
-            // Perform screen smash
-            function performScreenSmash() {
-                if (state.smashesRemaining <= 0 || state.isAnimating) {
-                    return;
-                }
+            // Modified isSolvable to accept a board parameter
+            function isSolvable(board = state.board) {
+                const boardCopy = JSON.parse(JSON.stringify(board));
+                let moves = 0;
+                let maxMoves = 100;
                 
-                console.log('Starting screen smash - strict 9 brick limit');
-                
-                // Play smash sound
-                playSound('smash');
-                
-                state.isAnimating = true;
-                
-                // Use a smash
-                state.smashesRemaining--;
-                smashesElement.textContent = state.smashesRemaining;
-                updateSmashButton();
-                
-                // Find all regular bricks (not special)
-                const regularBricks = [];
-                for (let row = 0; row < config.rows; row++) {
-                    for (let col = 0; col < config.columns; col++) {
-                        const brick = state.board[row][col];
-                        if (brick && !config.specialBricks.includes(brick.type)) {
-                            regularBricks.push({ row, col });
-                        }
-                    }
-                }
-                
-                // If we don't have at least 9 regular bricks, smash as many as we can
-                const numToSmash = Math.min(9, regularBricks.length);
-                if (numToSmash < 3) {
-                    console.log("Not enough regular bricks to perform a screen smash!");
-                    state.isAnimating = false;
-                    return;
-                }
-                
-                // Randomly select EXACTLY 9 bricks to smash (or fewer if there aren't enough)
-                const shuffled = [...regularBricks].sort(() => 0.5 - Math.random());
-                const bricksToSmash = shuffled.slice(0, numToSmash);
-                
-                console.log(`Smashing exactly ${bricksToSmash.length} bricks`);
-                
-                // Create match-like structure for the smashed bricks
-                const smashMatch = {
-                    bricks: bricksToSmash
-                };
-                
-                // Process like a match
-                processMatches([smashMatch]);
-            }
-            
-            // Special function to handle gravity after smash
-            function handleGravityAfterSmash() {
-                console.log('Handling gravity after smash');
-                
-                // Calculate which bricks need to fall
-                const movingBricks = [];
-                
-                // For each column, apply gravity
-                for (let col = 0; col < config.columns; col++) {
-                    // Start from the bottom and move upward
-                    for (let row = config.rows - 1; row >= 0; row--) {
-                        if (state.board[row][col] === null) {
-                            // Found an empty space, find the next brick above it
-                            let nextBrickRow = row - 1;
-                            while (nextBrickRow >= 0 && state.board[nextBrickRow][col] === null) {
-                                nextBrickRow--;
-                            }
-                            
-                            // If we found a brick above, move it down
-                            if (nextBrickRow >= 0) {
-                                movingBricks.push({
-                                    fromRow: nextBrickRow,
-                                    fromCol: col,
-                                    toRow: row,
-                                    toCol: col,
-                                    brick: state.board[nextBrickRow][col]
-                                });
-                                
-                                // Update the board data
-                                state.board[row][col] = state.board[nextBrickRow][col];
-                                state.board[row][col].row = row;
-                                state.board[nextBrickRow][col] = null;
-                                
-                                // We need to reprocess this position since we just filled it
-                                row++;
-                            }
-                        }
+                while (hasBricks(boardCopy) && moves < maxMoves) {
+                    const matches = findMatchesInBoard(boardCopy);
+                    if (matches.length === 0) {
+                        return false;
                     }
                     
-                    // Count empty spaces at the top
-                    let emptySpaces = 0;
-                    for (let row = 0; row < config.rows; row++) {
-                        if (state.board[row][col] === null) {
-                            emptySpaces++;
-                        } else {
-                            break;
-                        }
-                    }
+                    matches.forEach(match => {
+                        match.bricks.forEach(({ row, col }) => {
+                            boardCopy[row][col] = null;
+                        });
+                    });
                     
-                    // Fill the top with new bricks
-                    for (let row = 0; row < emptySpaces; row++) {
-                        let brickType;
-                        
-                        // Determine if we should create a special brick
-                        if (Math.random() < config.specialBrickChance) {
-                            const specialIndex = Math.floor(Math.random() * config.specialBricks.length);
-                            brickType = config.specialBricks[specialIndex];
-                        } else {
-                            const regularIndex = Math.floor(Math.random() * config.brickTypes.length);
-                            brickType = config.brickTypes[regularIndex];
-                        }
-                        
-                        state.board[row][col] = {
-                            type: brickType,
-                            row: row,
-                            col: col,
-                            animated: false // Mark as new, so it can receive the drop-in animation
-                        };
-                    }
+                    moves++;
                 }
                 
-                console.log(`Found ${movingBricks.length} bricks to move`);
-                
-                // Render the updated board
-                renderBoard();
-                
-                // Animate the bricks falling
-                const cells = document.querySelectorAll('.cell');
-                cells.forEach(cell => {
-                    const row = parseInt(cell.getAttribute('data-row'));
-                    const col = parseInt(cell.getAttribute('data-col'));
-                    
-                    // Add falling animation to moved bricks
-                    for (const move of movingBricks) {
-                        if (move.toRow === row && move.toCol === col) {
-                            const brick = cell.querySelector('.brick');
-                            if (brick) {
-                                const distance = move.toRow - move.fromRow;
-                                brick.style.setProperty('--fall-distance', `${distance * 100}%`);
-                                brick.classList.add('falling');
-                                
-                                // Remove animation class after it completes
-                                setTimeout(() => {
-                                    brick.classList.remove('falling');
-                                }, 400);
-                            }
-                            break;
-                        }
-                    }
-                    
-                    // Add drop-in animation for new bricks at the top
-                    if (row < 2 && state.board[row][col] && !state.board[row][col].animated) {
-                        const brick = cell.querySelector('.brick');
-                        if (brick) {
-                            brick.classList.add('new-brick');
-                            state.board[row][col].animated = true;
-                        }
-                    }
-                });
-                
-                // Wait for animations to complete, then check for new matches
-                setTimeout(() => {
-                    const matches = findMatches();
-                    if (matches.length > 0) {
-                        processMatches(matches);
-                    } else {
-                        console.log('No cascade matches, ending smash sequence');
-                        state.isAnimating = false;
-                    }
-                }, 600);
-            }
-            
-            // Apply gravity to the board
-            function applyGravity() {
-                // Mark original positions of bricks for animation
-                const originalPositions = [];
-                let hasMoved = false;
-                
-                // For each column, apply gravity
-                for (let col = 0; col < config.columns; col++) {
-                    let emptySpaces = 0;
-                    
-                    // Start from the bottom and move upward
-                    for (let row = config.rows - 1; row >= 0; row--) {
-                        if (state.board[row][col] === null) {
-                            // Found an empty space
-                            emptySpaces++;
-                        } else if (emptySpaces > 0) {
-                            // Move this brick down by the number of empty spaces
-                            const newRow = row + emptySpaces;
-                            
-                            // Store original position for animation
-                            originalPositions.push({
-                                fromRow: row,
-                                fromCol: col,
-                                toRow: newRow,
-                                toCol: col,
-                                type: state.board[row][col].type
-                            });
-                            
-                            // Update the board data
-                            state.board[newRow][col] = state.board[row][col];
-                            state.board[newRow][col].row = newRow;
-                            state.board[row][col] = null;
-                            hasMoved = true;
-                        }
-                    }
-                    
-                    // Fill the top with new bricks
-                    for (let row = 0; row < emptySpaces; row++) {
-                        let brickType;
-                        
-                        // Determine if we should create a special brick
-                        if (Math.random() < config.specialBrickChance) {
-                            const specialIndex = Math.floor(Math.random() * config.specialBricks.length);
-                            brickType = config.specialBricks[specialIndex];
-                        } else {
-                            const regularIndex = Math.floor(Math.random() * config.brickTypes.length);
-                            brickType = config.brickTypes[regularIndex];
-                        }
-                        
-                        state.board[row][col] = {
-                            type: brickType,
-                            row: row,
-                            col: col,
-                            animated: false // Mark as new, so it can receive the drop-in animation
-                        };
-                    }
-                }
-                
-                // Animate the falling bricks
-                animateFallingBricks(originalPositions);
-            }
-            
-            // Animate the falling of bricks
-            function animateFallingBricks(movements) {
-                // First, render the board with the new state
-                renderBoard();
-                
-                // If no movements, check for matches immediately
-                if (movements.length === 0) {
-                    console.log('No movements in animateFallingBricks');
-                    checkForMatches();
-                    return;
-                }
-                
-                // Animate the movement
-                movements.forEach(move => {
-                    const cell = getCellElement(move.toRow, move.toCol);
-                    if (cell) {
-                        const brick = cell.querySelector('.brick');
-                        if (brick) {
-                            const distance = move.toRow - move.fromRow;
-                            brick.style.setProperty('--fall-distance', `${distance * 100}%`);
-                            brick.classList.add('falling');
-                            
-                            // Remove animation class after it completes
-                            setTimeout(() => {
-                                brick.classList.remove('falling');
-                            }, 400);
-                        }
-                    }
-                });
-                
-                // Look for potential matches after gravity
-                setTimeout(() => {
-                    checkForMatches();
-                }, 500);
-            }
-            
-            // Check for matches
-            function checkForMatches() {
-                const matches = findMatches();
-                
-                if (matches.length > 0) {
-                    processMatches(matches);
-                } else {
-                    state.isAnimating = false;
-                    // Check for game over when no more matches are found
-                    checkGameOver();
-                }
-            }
-            
-            // Refill the board after smashing
-            function refillBoard() {
-                applyGravity();
-            }
-            
-            // Event listeners
-            newGameButton.addEventListener('click', initGame);
-            smashButton.addEventListener('click', performScreenSmash);
-            helpButton.addEventListener('click', () => {
-                helpPopup.classList.add('show');
-            });
-            
-            closeHelpBtn.addEventListener('click', () => {
-                helpPopup.classList.remove('show');
-            });
-            
-            // Close help popup when clicking outside
-            window.addEventListener('click', (e) => {
-                if (e.target === helpPopup) {
-                    helpPopup.classList.remove('show');
-                }
-            });
-            
-            // Start the game
-            initGame();
-            
-            // Setup sound effects
-            setupSounds();
-            
-            // Sound effects setup function
-            function setupSounds() {
-                // Create empty audio elements (would normally have real sound files)
-                const sounds = {
-                    swap: new Audio(),
-                    match: new Audio(),
-                    special: new Audio(),
-                    smash: new Audio()
-                };
-                
-                // Function to play sound
-                window.playSound = function(sound) {
-                    // Only attempt to play if the audio element exists
-                    const audioEl = sounds[sound];
-                    if (audioEl && window.soundEnabled) {
-                        try {
-                            // Reset and play
-                            audioEl.currentTime = 0;
-                            audioEl.play().catch(() => {
-                                // Silently fail if browser doesn't allow audio
-                            });
-                        } catch (e) {
-                            // Ignore errors
-                        }
-                    }
-                };
-                
-                // Add sound toggle button
-                const controls = document.querySelector('.controls');
-                const soundBtn = document.createElement('button');
-                soundBtn.textContent = '🔊 Sound';
-                soundBtn.classList.add('sound-button');
-                soundBtn.style.backgroundColor = '#333';
-                
-                // Initialize sound state
-                window.soundEnabled = false;
-                
-                soundBtn.addEventListener('click', () => {
-                    window.soundEnabled = !window.soundEnabled;
-                    soundBtn.style.backgroundColor = window.soundEnabled ? '#4CAF50' : '#333';
-                });
-                
-                controls.appendChild(soundBtn);
+                return !hasBricks(boardCopy);
             }
 
-            // Find a valid move for hint
-            function findHintMove() {
-                // Check horizontal potential matches
-                for (let row = 0; row < config.rows; row++) {
-                    for (let col = 0; col < config.columns - 1; col++) {
-                        if (!state.board[row][col] || !state.board[row][col + 1]) continue;
-                        
-                        // Try swapping with right neighbor
-                        swapInModel(row, col, row, col + 1);
-                        const hasMatchRight = findMatches().length > 0;
-                        swapInModel(row, col, row, col + 1); // Swap back
-                        
-                        if (hasMatchRight) {
-                            return { row1: row, col1: col, row2: row, col2: col + 1 };
-                        }
-                    }
-                }
+            // Modify swapBricks to store previous state
+            function swapBricks(row1, col1, row2, col2) {
+                console.log('Starting swap:', row1, col1, 'with', row2, col2);
+                state.isAnimating = true;
                 
-                // Check vertical potential matches
-                for (let row = 0; row < config.rows - 1; row++) {
-                    for (let col = 0; col < config.columns; col++) {
-                        if (!state.board[row][col] || !state.board[row + 1][col]) continue;
-                        
-                        // Try swapping with bottom neighbor
-                        swapInModel(row, col, row + 1, col);
-                        const hasMatchBottom = findMatches().length > 0;
-                        swapInModel(row, col, row + 1, col); // Swap back
-                        
-                        if (hasMatchBottom) {
-                            return { row1: row, col1: col, row2: row + 1, col2: col };
-                        }
-                    }
-                }
+                // Store the current state before making the move
+                storePreviousState();
                 
-                return null; // No valid moves found
-            }
-            
-            // Swap in data model without rendering
-            function swapInModel(row1, col1, row2, col2) {
+                // Remove selection
+                state.selectedCell.element.querySelector('.brick').classList.remove('selected');
+                state.selectedCell = null;
+                
+                // Swap in the data model
                 const temp = state.board[row1][col1];
                 state.board[row1][col1] = state.board[row2][col2];
                 state.board[row2][col2] = temp;
                 
                 // Update row and col properties
-                if (state.board[row1][col1]) state.board[row1][col1].row = row1;
-                if (state.board[row1][col1]) state.board[row1][col1].col = col1;
-                if (state.board[row2][col2]) state.board[row2][col2].row = row2;
-                if (state.board[row2][col2]) state.board[row2][col2].col = col2;
-            }
-            
-            // Check if there are any valid moves on the board
-            function hasValidMoves() {
-                return findHintMove() !== null;
-            }
-            
-            // Handle hint button click
-            function handleHintClick() {
-                if (state.hintsRemaining <= 0 || state.isAnimating || state.gameOver) {
-                    return;
+                if (state.board[row1][col1]) {
+                    state.board[row1][col1].row = row1;
+                    state.board[row1][col1].col = col1;
+                }
+                if (state.board[row2][col2]) {
+                    state.board[row2][col2].row = row2;
+                    state.board[row2][col2].col = col2;
                 }
                 
-                // Use a hint
-                state.hintsRemaining--;
-                hintsRemainingElement.textContent = state.hintsRemaining;
-                updateHintButton();
+                // Re-render the board
+                renderBoard();
                 
-                // Find a valid move
-                const move = findHintMove();
-                if (move) {
-                    // Highlight the suggested move
-                    const cell1 = getCellElement(move.row1, move.col1);
-                    const cell2 = getCellElement(move.row2, move.col2);
-                    
-                    if (cell1 && cell2) {
-                        // Apply hint animation
-                        cell1.classList.add('hint-highlight');
-                        cell2.classList.add('hint-highlight');
-                        
-                        // Remove hint after a delay
-                        setTimeout(() => {
-                            cell1.classList.remove('hint-highlight');
-                            cell2.classList.remove('hint-highlight');
-                        }, 2000);
-                    }
+                // Check for matches
+                const matches = findMatches();
+                
+                if (matches.length > 0) {
+                    console.log('Valid move found, processing matches');
+                    // Valid move
+                    state.moves++;
+                    movesElement.textContent = state.moves;
+                    processMatches(matches);
                 } else {
-                    // No valid moves - game over
-                    checkGameOver();
+                    console.log('Invalid move, swapping back');
+                    // Invalid move - swap back
+                    const temp = state.board[row1][col1];
+                    state.board[row1][col1] = state.board[row2][col2];
+                    state.board[row2][col2] = temp;
+                    
+                    // Update row and col properties
+                    if (state.board[row1][col1]) {
+                        state.board[row1][col1].row = row1;
+                        state.board[row1][col1].col = col1;
+                    }
+                    if (state.board[row2][col2]) {
+                        state.board[row2][col2].row = row2;
+                        state.board[row2][col2].col = col2;
+                    }
+                    
+                    // Re-render the board
+                    renderBoard();
+                    state.isAnimating = false;
+                    state.previousState = null; // Clear previous state for invalid moves
+                    undoButton.disabled = true;
                 }
             }
-            
-            // Check for game over (no valid moves)
-            function checkGameOver() {
-                if (!hasValidMoves() && !state.gameOver) {
-                    state.gameOver = true;
-                    
-                    // Show game over overlay
-                    const finalScoreElement = document.getElementById('final-score');
-                    finalScoreElement.textContent = state.score;
-                    
-                    // Show game over after a slight delay
-                    setTimeout(() => {
-                        gameOverOverlay.classList.add('show');
-                    }, 1000);
+
+            // Modify processMatches to check for unwinnable state
+            function processMatches(matches) {
+                let pointsEarned = 0;
+                
+                matches.forEach(match => {
+                    match.bricks.forEach(({ row, col }) => {
+                        state.board[row][col] = null;
+                        pointsEarned += 10;
+                    });
+                });
+                
+                state.score += pointsEarned;
+                scoreElement.textContent = state.score;
+                
+                renderBoard();
+                
+                // Check if the board is cleared
+                if (!hasBricks(state.board)) {
+                    levelCompleteOverlay.classList.add('show');
+                    document.getElementById('level-score').textContent = state.score;
                 }
+                // Check if the board is still winnable
+                else if (!isBoardWinnable()) {
+                    gameOverOverlay.classList.add('show');
+                    document.getElementById('final-score').textContent = state.score;
+                }
+                
+                state.isAnimating = false;
             }
             
-            // Update hint button state
-            function updateHintButton() {
-                hintButton.disabled = state.hintsRemaining <= 0;
-            }
-            
-            // Update smash button state
-            function updateSmashButton() {
-                smashButton.disabled = state.smashesRemaining <= 0;
-            }
+            // Start the game
+            initGame();
         });
     </script>
 </body>
