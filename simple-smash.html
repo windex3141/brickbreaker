@@ -415,6 +415,58 @@
             from { opacity: 0; }
             to { opacity: 1; }
         }
+
+        .hint-highlight {
+            animation: pulse 1s infinite alternate;
+            z-index: 10;
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 5px 2px rgba(66, 133, 244, 0.7);
+            }
+            100% {
+                box-shadow: 0 0 15px 5px rgba(66, 133, 244, 0.9);
+            }
+        }
+        
+        .notification {
+            animation-fill-mode: forwards;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -70%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        
+        #game-over-overlay {
+            text-align: center;
+        }
+        
+        #game-over-overlay h2 {
+            color: #e86a92;
+            margin-bottom: 20px;
+        }
+        
+        #restart-btn {
+            margin-top: 20px;
+            padding: 10px 30px;
+            background-color: #e86a92;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        #restart-btn:hover {
+            background-color: #d25c82;
+        }
     </style>
 </head>
 <body>
@@ -462,7 +514,8 @@
                     <li>🏆 Gold Bricks: Worth 30 points!</li>
                 </ul>
             </li>
-            <li><strong>Screen Smash:</strong> Use Angela's Screen Smash to break 9 random bricks and create chain reactions. You get one smash per game!</li>
+            <li><strong>Screen Smash:</strong> Use Screen Smash to break 9 random bricks. Recharges after 1000 points.</li>
+            <li><strong>Hint:</strong> Click the Hint button to highlight a valid move. You get 3 hints, and they recharge every 500 points.</li>
             <li><strong>Animations:</strong> Watch for special animations when matching special bricks!</li>
             <li><strong>Sound Effects:</strong> Toggle sound effects with the sound button.</li>
             <li><strong>Goal:</strong> Get the highest score possible before running out of moves!</li>
@@ -483,7 +536,12 @@
                     diamond: 50,
                     gold: 30
                 },
-                initialSmashes: 1
+                initialSmashes: 1,
+                initialHints: 3,
+                hintRechargePoints: 500,
+                smashRechargePoints: 1000,
+                lastHintRechargeScore: 0,
+                lastSmashRechargeScore: 0
             };
             
             // Game state
@@ -492,7 +550,11 @@
                 score: 0,
                 moves: 0,
                 smashesRemaining: config.initialSmashes,
-                isAnimating: false
+                hintsRemaining: config.initialHints,
+                isAnimating: false,
+                lastHintRechargeScore: 0,
+                lastSmashRechargeScore: 0,
+                gameOver: false
             };
             
             // DOM elements
@@ -506,6 +568,45 @@
             const helpPopup = document.getElementById('help-popup');
             const closeHelpBtn = document.querySelector('.help-popup .close-btn');
             
+            // Create hint button
+            const hintButton = document.createElement('button');
+            hintButton.id = 'hint-btn';
+            hintButton.classList.add('hint-button');
+            hintButton.textContent = 'Hint';
+            
+            // Insert hint button after smash button
+            smashButton.after(hintButton);
+            
+            // Create hints counter display
+            const hintsElement = document.createElement('div');
+            hintsElement.textContent = 'Hints: ';
+            const hintsRemainingElement = document.createElement('span');
+            hintsRemainingElement.id = 'hints';
+            hintsRemainingElement.textContent = config.initialHints;
+            hintsElement.appendChild(hintsRemainingElement);
+            
+            // Add hints to game info
+            const gameInfo = document.querySelector('.game-info');
+            gameInfo.appendChild(hintsElement);
+            
+            // Create game over overlay
+            const gameOverOverlay = document.createElement('div');
+            gameOverOverlay.id = 'game-over-overlay';
+            gameOverOverlay.classList.add('help-popup');
+            gameOverOverlay.innerHTML = `
+                <h2>Game Over!</h2>
+                <p>No more valid moves available.</p>
+                <p>Final Score: <span id="final-score">0</span></p>
+                <button id="restart-btn">Play Again</button>
+            `;
+            document.body.appendChild(gameOverOverlay);
+            
+            // Add the restart button event listener
+            document.getElementById('restart-btn').addEventListener('click', () => {
+                gameOverOverlay.classList.remove('show');
+                initGame();
+            });
+            
             // Initialize the game
             function initGame() {
                 console.log('Initializing game...');
@@ -515,15 +616,21 @@
                 state.score = 0;
                 state.moves = 0;
                 state.smashesRemaining = config.initialSmashes;
+                state.hintsRemaining = config.initialHints;
                 state.isAnimating = false;
+                state.lastHintRechargeScore = 0;
+                state.lastSmashRechargeScore = 0;
+                state.gameOver = false;
                 
                 // Update UI
                 scoreElement.textContent = state.score;
                 movesElement.textContent = state.moves;
                 smashesElement.textContent = state.smashesRemaining;
+                hintsRemainingElement.textContent = state.hintsRemaining;
                 
-                // Update smash button state
+                // Update button states
                 updateSmashButton();
+                updateHintButton();
                 
                 // Clear the board
                 gameBoard.innerHTML = '';
@@ -607,10 +714,34 @@
                 return document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
             }
             
-            // Update score
+            // Update score with ability recharge checks
             function updateScore(points) {
                 state.score += points;
                 scoreElement.textContent = state.score;
+                
+                // Check for hint recharge
+                if (state.hintsRemaining < config.initialHints && 
+                    state.score >= state.lastHintRechargeScore + config.hintRechargePoints) {
+                    state.hintsRemaining++;
+                    state.lastHintRechargeScore = state.score;
+                    hintsRemainingElement.textContent = state.hintsRemaining;
+                    updateHintButton();
+                    
+                    // Show hint recharge notification
+                    showNotification('Hint Recharged!');
+                }
+                
+                // Check for smash recharge
+                if (state.smashesRemaining === 0 && 
+                    state.score >= state.lastSmashRechargeScore + config.smashRechargePoints) {
+                    state.smashesRemaining = 1;
+                    state.lastSmashRechargeScore = state.score;
+                    smashesElement.textContent = state.smashesRemaining;
+                    updateSmashButton();
+                    
+                    // Show smash recharge notification
+                    showNotification('Screen Smash Recharged!');
+                }
                 
                 // Create floating score popup
                 const scorePopup = document.createElement('div');
@@ -628,13 +759,27 @@
                 }, 1000);
             }
             
-            // Update smash button state
-            function updateSmashButton() {
-                if (state.smashesRemaining <= 0) {
-                    smashButton.disabled = true;
-                } else {
-                    smashButton.disabled = false;
-                }
+            // Show notification
+            function showNotification(message) {
+                const notification = document.createElement('div');
+                notification.classList.add('notification');
+                notification.textContent = message;
+                notification.style.position = 'absolute';
+                notification.style.top = '20%';
+                notification.style.left = '50%';
+                notification.style.transform = 'translate(-50%, -50%)';
+                notification.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+                notification.style.color = 'white';
+                notification.style.padding = '10px 20px';
+                notification.style.borderRadius = '5px';
+                notification.style.zIndex = '1000';
+                notification.style.animation = 'fadeIn 0.3s, fadeOut 0.3s 2s forwards';
+                
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 2500);
             }
             
             // Handle cell click for swapping
@@ -983,9 +1128,9 @@
             // Check if any match contains a special brick
             function hasSpecialMatch(matches) {
                 for (const match of matches) {
-                    for (const {row, col} of match) {
-                        const brickType = state.board[row][col].type;
-                        if (brickType === '💎' || brickType === '🏆') {
+                    for (const {row, col} of match.bricks) {
+                        const brick = state.board[row][col];
+                        if (brick && (brick.type === 'diamond' || brick.type === 'gold')) {
                             return true;
                         }
                     }
@@ -998,6 +1143,8 @@
                 if (state.smashesRemaining <= 0 || state.isAnimating) {
                     return;
                 }
+                
+                console.log('Starting screen smash - strict 9 brick limit');
                 
                 // Play smash sound
                 playSound('smash');
@@ -1015,7 +1162,7 @@
                     for (let col = 0; col < config.columns; col++) {
                         const brick = state.board[row][col];
                         if (brick && !config.specialBricks.includes(brick.type)) {
-                            regularBricks.push({ row, col, brick });
+                            regularBricks.push({ row, col });
                         }
                     }
                 }
@@ -1028,34 +1175,148 @@
                     return;
                 }
                 
-                // Randomly select bricks to smash
-                const shuffled = regularBricks.sort(() => 0.5 - Math.random());
+                // Randomly select EXACTLY 9 bricks to smash (or fewer if there aren't enough)
+                const shuffled = [...regularBricks].sort(() => 0.5 - Math.random());
                 const bricksToSmash = shuffled.slice(0, numToSmash);
+                
+                console.log(`Smashing exactly ${bricksToSmash.length} bricks`);
                 
                 // Create match-like structure for the smashed bricks
                 const smashMatch = {
-                    bricks: bricksToSmash.map(({ row, col }) => ({ row, col }))
+                    bricks: bricksToSmash
                 };
                 
                 // Process like a match
                 processMatches([smashMatch]);
             }
-
-            // Check for matches
-            function checkForMatches() {
-                const matches = findMatches();
+            
+            // Special function to handle gravity after smash
+            function handleGravityAfterSmash() {
+                console.log('Handling gravity after smash');
                 
-                if (matches.length > 0) {
-                    processMatches(matches);
-                } else {
-                    state.isAnimating = false;
+                // Calculate which bricks need to fall
+                const movingBricks = [];
+                
+                // For each column, apply gravity
+                for (let col = 0; col < config.columns; col++) {
+                    // Start from the bottom and move upward
+                    for (let row = config.rows - 1; row >= 0; row--) {
+                        if (state.board[row][col] === null) {
+                            // Found an empty space, find the next brick above it
+                            let nextBrickRow = row - 1;
+                            while (nextBrickRow >= 0 && state.board[nextBrickRow][col] === null) {
+                                nextBrickRow--;
+                            }
+                            
+                            // If we found a brick above, move it down
+                            if (nextBrickRow >= 0) {
+                                movingBricks.push({
+                                    fromRow: nextBrickRow,
+                                    fromCol: col,
+                                    toRow: row,
+                                    toCol: col,
+                                    brick: state.board[nextBrickRow][col]
+                                });
+                                
+                                // Update the board data
+                                state.board[row][col] = state.board[nextBrickRow][col];
+                                state.board[row][col].row = row;
+                                state.board[nextBrickRow][col] = null;
+                                
+                                // We need to reprocess this position since we just filled it
+                                row++;
+                            }
+                        }
+                    }
+                    
+                    // Count empty spaces at the top
+                    let emptySpaces = 0;
+                    for (let row = 0; row < config.rows; row++) {
+                        if (state.board[row][col] === null) {
+                            emptySpaces++;
+                        } else {
+                            break;
+                        }
+                    }
+                    
+                    // Fill the top with new bricks
+                    for (let row = 0; row < emptySpaces; row++) {
+                        let brickType;
+                        
+                        // Determine if we should create a special brick
+                        if (Math.random() < config.specialBrickChance) {
+                            const specialIndex = Math.floor(Math.random() * config.specialBricks.length);
+                            brickType = config.specialBricks[specialIndex];
+                        } else {
+                            const regularIndex = Math.floor(Math.random() * config.brickTypes.length);
+                            brickType = config.brickTypes[regularIndex];
+                        }
+                        
+                        state.board[row][col] = {
+                            type: brickType,
+                            row: row,
+                            col: col,
+                            animated: false // Mark as new, so it can receive the drop-in animation
+                        };
+                    }
                 }
+                
+                console.log(`Found ${movingBricks.length} bricks to move`);
+                
+                // Render the updated board
+                renderBoard();
+                
+                // Animate the bricks falling
+                const cells = document.querySelectorAll('.cell');
+                cells.forEach(cell => {
+                    const row = parseInt(cell.getAttribute('data-row'));
+                    const col = parseInt(cell.getAttribute('data-col'));
+                    
+                    // Add falling animation to moved bricks
+                    for (const move of movingBricks) {
+                        if (move.toRow === row && move.toCol === col) {
+                            const brick = cell.querySelector('.brick');
+                            if (brick) {
+                                const distance = move.toRow - move.fromRow;
+                                brick.style.setProperty('--fall-distance', `${distance * 100}%`);
+                                brick.classList.add('falling');
+                                
+                                // Remove animation class after it completes
+                                setTimeout(() => {
+                                    brick.classList.remove('falling');
+                                }, 400);
+                            }
+                            break;
+                        }
+                    }
+                    
+                    // Add drop-in animation for new bricks at the top
+                    if (row < 2 && state.board[row][col] && !state.board[row][col].animated) {
+                        const brick = cell.querySelector('.brick');
+                        if (brick) {
+                            brick.classList.add('new-brick');
+                            state.board[row][col].animated = true;
+                        }
+                    }
+                });
+                
+                // Wait for animations to complete, then check for new matches
+                setTimeout(() => {
+                    const matches = findMatches();
+                    if (matches.length > 0) {
+                        processMatches(matches);
+                    } else {
+                        console.log('No cascade matches, ending smash sequence');
+                        state.isAnimating = false;
+                    }
+                }, 600);
             }
             
             // Apply gravity to the board
             function applyGravity() {
                 // Mark original positions of bricks for animation
                 const originalPositions = [];
+                let hasMoved = false;
                 
                 // For each column, apply gravity
                 for (let col = 0; col < config.columns; col++) {
@@ -1083,6 +1344,7 @@
                             state.board[newRow][col] = state.board[row][col];
                             state.board[newRow][col].row = newRow;
                             state.board[row][col] = null;
+                            hasMoved = true;
                         }
                     }
                     
@@ -1117,6 +1379,13 @@
                 // First, render the board with the new state
                 renderBoard();
                 
+                // If no movements, check for matches immediately
+                if (movements.length === 0) {
+                    console.log('No movements in animateFallingBricks');
+                    checkForMatches();
+                    return;
+                }
+                
                 // Animate the movement
                 movements.forEach(move => {
                     const cell = getCellElement(move.toRow, move.toCol);
@@ -1139,6 +1408,19 @@
                 setTimeout(() => {
                     checkForMatches();
                 }, 500);
+            }
+            
+            // Check for matches
+            function checkForMatches() {
+                const matches = findMatches();
+                
+                if (matches.length > 0) {
+                    processMatches(matches);
+                } else {
+                    state.isAnimating = false;
+                    // Check for game over when no more matches are found
+                    checkGameOver();
+                }
             }
             
             // Refill the board after smashing
@@ -1213,6 +1495,122 @@
                 });
                 
                 controls.appendChild(soundBtn);
+            }
+
+            // Find a valid move for hint
+            function findHintMove() {
+                // Check horizontal potential matches
+                for (let row = 0; row < config.rows; row++) {
+                    for (let col = 0; col < config.columns - 1; col++) {
+                        if (!state.board[row][col] || !state.board[row][col + 1]) continue;
+                        
+                        // Try swapping with right neighbor
+                        swapInModel(row, col, row, col + 1);
+                        const hasMatchRight = findMatches().length > 0;
+                        swapInModel(row, col, row, col + 1); // Swap back
+                        
+                        if (hasMatchRight) {
+                            return { row1: row, col1: col, row2: row, col2: col + 1 };
+                        }
+                    }
+                }
+                
+                // Check vertical potential matches
+                for (let row = 0; row < config.rows - 1; row++) {
+                    for (let col = 0; col < config.columns; col++) {
+                        if (!state.board[row][col] || !state.board[row + 1][col]) continue;
+                        
+                        // Try swapping with bottom neighbor
+                        swapInModel(row, col, row + 1, col);
+                        const hasMatchBottom = findMatches().length > 0;
+                        swapInModel(row, col, row + 1, col); // Swap back
+                        
+                        if (hasMatchBottom) {
+                            return { row1: row, col1: col, row2: row + 1, col2: col };
+                        }
+                    }
+                }
+                
+                return null; // No valid moves found
+            }
+            
+            // Swap in data model without rendering
+            function swapInModel(row1, col1, row2, col2) {
+                const temp = state.board[row1][col1];
+                state.board[row1][col1] = state.board[row2][col2];
+                state.board[row2][col2] = temp;
+                
+                // Update row and col properties
+                if (state.board[row1][col1]) state.board[row1][col1].row = row1;
+                if (state.board[row1][col1]) state.board[row1][col1].col = col1;
+                if (state.board[row2][col2]) state.board[row2][col2].row = row2;
+                if (state.board[row2][col2]) state.board[row2][col2].col = col2;
+            }
+            
+            // Check if there are any valid moves on the board
+            function hasValidMoves() {
+                return findHintMove() !== null;
+            }
+            
+            // Handle hint button click
+            function handleHintClick() {
+                if (state.hintsRemaining <= 0 || state.isAnimating || state.gameOver) {
+                    return;
+                }
+                
+                // Use a hint
+                state.hintsRemaining--;
+                hintsRemainingElement.textContent = state.hintsRemaining;
+                updateHintButton();
+                
+                // Find a valid move
+                const move = findHintMove();
+                if (move) {
+                    // Highlight the suggested move
+                    const cell1 = getCellElement(move.row1, move.col1);
+                    const cell2 = getCellElement(move.row2, move.col2);
+                    
+                    if (cell1 && cell2) {
+                        // Apply hint animation
+                        cell1.classList.add('hint-highlight');
+                        cell2.classList.add('hint-highlight');
+                        
+                        // Remove hint after a delay
+                        setTimeout(() => {
+                            cell1.classList.remove('hint-highlight');
+                            cell2.classList.remove('hint-highlight');
+                        }, 2000);
+                    }
+                } else {
+                    // No valid moves - game over
+                    checkGameOver();
+                }
+            }
+            
+            // Check for game over (no valid moves)
+            function checkGameOver() {
+                if (!hasValidMoves() && !state.gameOver) {
+                    state.gameOver = true;
+                    
+                    // Show game over overlay
+                    const finalScoreElement = document.getElementById('final-score');
+                    finalScoreElement.textContent = state.score;
+                    
+                    // Show game over after a slight delay
+                    setTimeout(() => {
+                        gameOverOverlay.classList.add('show');
+                    }, 1000);
+                }
+            }
+            
+            // Update hint button state
+            function updateHintButton() {
+                hintButton.disabled = state.hintsRemaining <= 0;
+            }
+            
+            // Update smash button state
+            function updateSmashButton() {
+                smashButton.disabled = state.smashesRemaining <= 0;
             }
         });
     </script>
